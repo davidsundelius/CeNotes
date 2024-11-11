@@ -53,10 +53,11 @@
   }
 
   async function loadSamples() {
+    if(navigator.audioSession) {
+      navigator.audioSession.type = 'playback';
+    }
     loading.value = true;
-    navigator.audioSession.type = 'playback';
     audioContext = new AudioContext()
-    
     for(let i = 1; i < 6; i++) {
       samples.push(await fetch('./samples/C'+i+'.mp3')
         .then((response) => response.arrayBuffer())
@@ -173,8 +174,7 @@
     <header class="header">
       <h1>CeNotes</h1>
       <div class="songs">
-        <label for="song">Låt:</label>
-        <select v-model="selectedSong">
+        <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
         </select>
       </div>
@@ -236,8 +236,17 @@
     align-items: center;
     margin-right: 2em;
   }
-
-  
+  .songSelector {
+    padding: 0.5em;
+    font-size: 1em;
+    font-family: inherit;
+    background-color: #313581;
+    color: #fff;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.25s;
+  }
 
   .sheetmusic {
     width: 100vw;
