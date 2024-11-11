@@ -11,6 +11,7 @@
   const fadeOutTime = 0.1;
   
   const loading = ref(true);
+  const isZoomedIn = ref(window.innerWidth > 800);
   const isPlaying = ref(false);
   const songs = ref([]);
   const selectedSong = ref(null);
@@ -82,7 +83,7 @@
     });
     console.log(osmd.sheet);
     
-    osmd.zoom = 0.9;
+    osmd.zoom = isZoomedIn.value ? 0.9 : 0.5;
     tempo.value = osmd.sheet.defaultStartTempoInBpm;
     timeBasedOnTempo.value = 60000 / tempo.value;
     osmd.render();
@@ -174,6 +175,12 @@
     isPlaying.value = false;
   }
 
+  function toggleZoom() {
+    isZoomedIn.value = !isZoomedIn.value;
+    osmd.zoom = isZoomedIn.value ? 0.9 : 0.5;
+    osmd.render();
+  }
+
   function playStartChoord() {
     pause();
     osmd.cursor.reset();
@@ -203,6 +210,7 @@
     <header class="header">
       <Logo class="logo" @click="back()" />
       <div class="songs">
+        <span @click="toggleZoom()" v-if="selectedSong" class="zoom">🔍</span>
         <span @click="back()" v-if="selectedSong" class="back">⬅️</span>
         <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
@@ -279,7 +287,13 @@
     align-items: center;
     margin-right: 2em;
   }
+  .zoom {
+    margin-right: 1em;
+    font-size: 1.5em;
+    cursor: pointer;
+  }
   .back {
+    margin-right: 1em;
     font-size: 1.5em;
     cursor: pointer;
   }
