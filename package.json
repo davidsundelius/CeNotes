@@ -1,0 +1,25 @@
+{
+  "name": "cenotes",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "serve": "vite --port 8080",
+    "build": "vue-tsc -b && vite build",
+    "deploy": "npm run generateSonglist && vite build",
+    "generateSonglist": "node ./scripts/generateSonglist.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "midi-json-parser": "^8.1.56",
+    "opensheetmusicdisplay": "^1.8.9",
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.1.5",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-pwa": "^0.20.5",
+    "vue-tsc": "^2.1.10"
+  }
+}
