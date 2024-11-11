@@ -192,6 +192,10 @@
       playTone(note.ToStringShort(3), 1000);
     }, 1000);
   }
+
+  function reload() {
+    window.location.reload(true);
+  }
 </script>
 
 <template>
@@ -215,6 +219,8 @@
         <br/><br/>
         <a href="https://drive.google.com/drive/u/0/folders/1NtsrANIRUENfbQavUggx9cu0L9mDGvph" target="_blank">Låtarkivet</a><br/>
         <a href="https://docs.google.com/spreadsheets/d/1y43wZmyr1p-7MujA9y752EdvHZ0mI1WrdrCaJaOBGDU" target="_blank">Medlemslista</a>
+        <br/><br/>
+        <button @click="reload()">Uppdatera</button>
       </div>
     </section>
     <div id="sheetmusic" class="sheetmusic"></div>
