@@ -6,7 +6,7 @@
   "scripts": {
     "serve": "vite --port 8080",
     "build": "vue-tsc -b && vite build",
-    "deploy": "npm run generateSonglist && vite build",
+    "deploy": "npm run generateSonglist && vite build --base=/CeNotes/",
     "generateSonglist": "node ./scripts/generateSonglist.js",
     "preview": "vite preview"
   },
