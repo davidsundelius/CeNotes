@@ -6,8 +6,8 @@
   "scripts": {
     "serve": "vite --port 8080",
     "build": "vue-tsc -b && vite build",
-    "deploy": "npm run generateSonglist && vite build --base=/CeNotes/",
-    "generateSonglist": "node ./scripts/generateSonglist.js",
+    "deploy": "npm run update && vite build --base=/CeNotes/",
+    "update": "node ./scripts/generateSonglist.js",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -18,7 +18,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.1.5",
     "typescript": "~5.6.3",
-    "vite": "^5.4.10",
+    "vite": "^5.4.11",
     "vite-plugin-pwa": "^0.20.5",
     "vue-tsc": "^2.1.10"
   }

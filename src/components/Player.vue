@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { ref, onMounted, watch } from 'vue';
+  import Logo from './Logo.vue';
   import Loader from './Loader.vue';
 
   let audioContext;
@@ -12,7 +13,7 @@
   const loading = ref(true);
   const isPlaying = ref(false);
   const songs = ref([]);
-  const selectedSong = ref('GottOl.musicxml');
+  const selectedSong = ref(null);
   const tempo = ref(120);
   const rythm = ref(4);
   const timeBasedOnTempo = ref(60000 / tempo.value);
@@ -172,6 +173,7 @@
 <template>
   <div>
     <header class="header">
+      <Logo class="logo" />
       <h1>CeNotes</h1>
       <div class="songs">
         <select v-model="selectedSong" class="songSelector">
@@ -181,6 +183,10 @@
     </header>
     <Loader v-if="loading" class="loader"/>
 
+    <section class="welcome" v-if="!loading && !selectedSong">
+      <h2>Välkommen till Fåmansbolags app!</h2>
+      För att sätta igång, välj en låt uppe till höger.
+    </section>
     <div id="sheetmusic" class="sheetmusic"></div>
     <footer v-if="!loading" class="playbar">
       <span @click="reverse()">⏮️</span>
@@ -209,7 +215,6 @@
     left: 50%;
     transform: translate(-50%, -50%);
   }
-
   .header {
     position: fixed;
     top: 0;
@@ -225,6 +230,7 @@
     margin: 0;
     flex: 1;
     text-align: left;
+    line-height: 29px;
     font-size: 32px;
   }
 
@@ -251,7 +257,7 @@
   .sheetmusic {
     width: 100vw;
     background-color: #fff;
-    margin-top: 70px;
+    margin-top: 63px;
     margin-bottom: 50px;
   }
 
