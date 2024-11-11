@@ -89,6 +89,11 @@
     osmd.cursor.show();
   }
 
+  function back() {
+    stop();
+    selectedSong.value = null;
+  }
+
   function play() {
     isPlaying.value = true;
     let timeUntilNextNote = 999999;
@@ -168,14 +173,33 @@
     activeSources = [];
     isPlaying.value = false;
   }
+
+  function playStartChoord() {
+    pause();
+    osmd.cursor.reset();
+    const queue = [];
+    osmd.cursor.NotesUnderCursor().forEach((note) => {
+      if(!note.ToStringShort(3).includes('rest') && !queue.find((n) => n.ToStringShort(3) === note.ToStringShort(3))) {
+        queue.push(note);
+      }
+    });
+    const interval = setInterval(() => {
+      if(queue.length === 0) {
+        clearInterval(interval);
+        return;
+      }
+      const note = queue.shift();
+      playTone(note.ToStringShort(3), 1000);
+    }, 1000);
+  }
 </script>
 
 <template>
   <div>
     <header class="header">
-      <Logo class="logo" />
-      <h1>CeNotes</h1>
+      <Logo class="logo" @click="back()" />
       <div class="songs">
+        <span @click="back()" v-if="selectedSong" class="back">⬅️</span>
         <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
         </select>
@@ -184,14 +208,21 @@
     <Loader v-if="loading" class="loader"/>
 
     <section class="welcome" v-if="!loading && !selectedSong">
-      <h2>Välkommen till Fåmansbolags app!</h2>
-      För att sätta igång, välj en låt uppe till höger.
+      <Logo class="fullsizeLogo" @click="selectedSong = null"/>
+      <div>
+        <h2>Välkommen till Fåmansbolags app!</h2>
+        För att sätta igång, välj en låt uppe till höger.
+        <br/><br/>
+        <a href="https://drive.google.com/drive/u/0/folders/1NtsrANIRUENfbQavUggx9cu0L9mDGvph" target="_blank">Låtarkivet</a><br/>
+        <a href="https://docs.google.com/spreadsheets/d/1y43wZmyr1p-7MujA9y752EdvHZ0mI1WrdrCaJaOBGDU" target="_blank">Medlemslista</a>
+      </div>
     </section>
     <div id="sheetmusic" class="sheetmusic"></div>
-    <footer v-if="!loading" class="playbar">
+    <footer v-if="!loading && selectedSong" class="playbar">
       <span @click="reverse()">⏮️</span>
       <span @click="play()" v-if="!isPlaying">▶️</span>
       <span @click="pause()" v-else>⏸️</span>
+      <span @click="playStartChoord()">🎼</span>
       <div class="parts">
         <div v-if="!loading">
           <div v-for="(part, index) in parts" :key="index" >
@@ -242,6 +273,10 @@
     align-items: center;
     margin-right: 2em;
   }
+  .back {
+    font-size: 1.5em;
+    cursor: pointer;
+  }
   .songSelector {
     padding: 0.5em;
     font-size: 1em;
@@ -253,6 +288,38 @@
     cursor: pointer;
     transition: border-color 0.25s;
   }
+
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    text-align: center;
+  }
+  .fullsizeLogo {
+    margin-bottom: 20px;
+    width: 120px;
+    height: 120px;
+    transform: scale(1);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% {
+        transform: scale(0.90);
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    50% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+    }
+
+    100% {
+        transform: scale(0.90);
+        box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+    }
+}
 
   .sheetmusic {
     width: 100vw;
