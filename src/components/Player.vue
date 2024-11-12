@@ -31,7 +31,7 @@
   }, {deep: true, immediate: true});
 
   watch(() => selectedSong, async () => {
-    if(!selectedSong.value || !document.getElementById('sheetmusic')) {
+    if(!selectedSong.value) {
       return;
     }
     await loadSheetMusic('./songs/' + selectedSong.value);
@@ -231,7 +231,7 @@
         <button @click="reload()">Uppdatera</button>
       </div>
     </section>
-    <div id="sheetmusic" class="sheetmusic"></div>
+    <div id="sheetmusic" class="sheetmusic" v-if="selectedSong"></div>
     <footer v-if="!loading && selectedSong" class="playbar">
       <span @click="reverse()">⏮️</span>
       <span @click="play()" v-if="!isPlaying">▶️</span>
@@ -315,6 +315,7 @@
     align-items: center;
     justify-content: center;
     height: 100vh;
+    width: 100vw;
     text-align: center;
   }
   .fullsizeLogo {

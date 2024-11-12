@@ -33,14 +33,14 @@
     {
       "form_factor": "wide",
       "label": "CeNotes Desktop",
-      "src": "assets/ScreenshotDesktop.webp",
+      "src": "./ScreenshotDesktop.webp",
       "sizes": "4106x2332"
     },
     {
       "form_factor": "narrow",
       "label": "CeNotes Mobile",
-      "src": "assets/ScreenshotMobile.webp",
+      "src": "./ScreenshotMobile.webp",
       "sizes": "734x1586"
     }
-  ],
+  ]
 }
