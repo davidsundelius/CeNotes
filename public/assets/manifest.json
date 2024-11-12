@@ -1,4 +1,5 @@
 {
+  "id": "com.cenotes",
   "short_name": "CeNotes",
   "name": "CeNotes",
   "description": "Spela och läsa noter",
@@ -23,6 +24,23 @@
   "start_url": "/CeNotes/",
   "display": "standalone",
   "orientation": "portrait",
+  "display_override": [],
+  "related_applications": [],
+  "prefer_related_applications": false,
   "theme_color": "#646cff",
-  "background_color": "#646cff"
+  "background_color": "#646cff",
+  "screenshots": [
+    {
+      "form_factor": "wide",
+      "label": "CeNotes Desktop",
+      "src": "assets/ScreenshotDesktop.webp",
+      "sizes": "4106x2332"
+    },
+    {
+      "form_factor": "narrow",
+      "label": "CeNotes Mobile",
+      "src": "assets/ScreenshotMobile.webp",
+      "sizes": "734x1586"
+    }
+  ],
 }
