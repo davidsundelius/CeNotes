@@ -117,27 +117,31 @@
       return NaN;
     }
     const noteValues = {
+      'Cb': -1,
       'C': 0,
+      'Cn': 0,
       'C#': 1,
       'Db': 1,
-      'Dn': 1,
+      'Dn': 2,
       'D': 2,
       'D#': 3,
       'Eb': 3,
-      'En': 3,
+      'En': 4,
       'E': 4,
+      'Fb': 4,
+      'Fn': 5,
       'F': 5,
       'F#': 6,
-      'Gn': 6,
       'Gb': 6,
+      'Gn': 7,
       'G': 7,
       'G#': 8,
-      'An': 8,
       'Ab': 8,
+      'An': 9,
       'A': 9,
       'A#': 10,
       'Bb': 10,
-      'Bn': 10,
+      'Bn': 11,
       'B': 11
     };
     const noteParts = note.match(/([A-G]#?n?b?)(\d)/);
@@ -150,6 +154,8 @@
 
   function playTone(note: string, duration: number) {
     const noteValue = getNoteOffsetFromC4(note);
+    console.log(note, noteValue);
+    
     if(isNaN(noteValue)) {
       return;
     }
