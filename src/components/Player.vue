@@ -154,8 +154,6 @@
 
   function playTone(note: string, duration: number) {
     const noteValue = getNoteOffsetFromC4(note);
-    console.log(note, noteValue);
-    
     if(isNaN(noteValue)) {
       return;
     }
