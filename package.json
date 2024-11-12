@@ -8,7 +8,7 @@
     "build": "vue-tsc -b && vite build",
     "deploy": "npm run update && vite build --base=/CeNotes/",
     "update": "node ./scripts/generateSonglist.js",
-    "preview": "vite preview"
+    "preview": "vite preview --port 8080"
   },
   "dependencies": {
     "midi-json-parser": "^8.1.56",
