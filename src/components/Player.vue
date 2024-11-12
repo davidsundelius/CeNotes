@@ -222,7 +222,7 @@
     <section class="welcome" v-if="!loading && !selectedSong">
       <Logo class="fullsizeLogo" @click="selectedSong = null"/>
       <div>
-        <h2>Välkommen till Fåmansbolags app!</h2>
+        <h2>Välkommen till Fåmansbolagets app!</h2>
         För att sätta igång, välj en låt uppe till höger.
         <br/><br/>
         <a href="https://drive.google.com/drive/u/0/folders/1NtsrANIRUENfbQavUggx9cu0L9mDGvph" target="_blank">Låtarkivet</a><br/>
