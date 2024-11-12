@@ -20,7 +20,7 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "/CeNotes/",
   "display": "standalone",
   "orientation": "portrait",
   "theme_color": "#646cff",
