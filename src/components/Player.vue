@@ -109,8 +109,6 @@
       timeUntilNextNote = Math.min(duration, timeUntilNextNote);
       playTone(note.ToStringShort(3), duration);
     });
-    console.log(notes[0], notes[0].SourceMeasure.endsWithLineRepetition())
-
     timeout = setTimeout(() => {
       osmd.cursor.next();
       const newNotes = osmd.cursor.NotesUnderCursor();
