@@ -3,28 +3,29 @@
   import Logo from './Logo.vue';
   import Loader from './Loader.vue';
 
-  let audioContext;
-  let samples = [];
-  let timeout = null;
-  let activeSources = [];
-  let osmd = null;
+  let audioContext: any;
+  let samples: Array<any> = [];
+  let timeout: any = null;
+  let activeSources: Array<any> = [];
+  let osmd: any = null;
   const fadeOutTime = 0.1;
   
   const loading = ref(true);
   const isZoomedIn = ref(window.innerWidth > 800);
   const isPlaying = ref(false);
-  const songs = ref([]);
+  const songs = ref<Array<{label: string, value: string}>>([]);
   const selectedSong = ref(null);
   const tempo = ref(120);
   const rythm = ref(4);
   const timeBasedOnTempo = ref(60000 / tempo.value);
-  const parts = ref([]);
+  const parts = ref<any>([]);
+  const hasRepetedOnce = ref(false);
 
-  watch(() => parts, (newParts) => {
+  watch(() => parts, (newParts: any) => {
     if(!osmd) {
       return;
     }
-    osmd.sheet.Parts.forEach((part, index) => {
+    osmd.sheet.Parts.forEach((part: any, index: number) => {
       part.voices[0].visible = newParts.value[index].show;
     });
     osmd.render();
@@ -46,7 +47,7 @@
   async function loadSongs() {
     const loadedSongs = await fetch('./songs.json')
       .then((response) => response.json());
-    songs.value = loadedSongs.map((song) => {
+    songs.value = loadedSongs.map((song: string) => {
       return {
         label: song,
         value: song + '.musicxml'
@@ -67,24 +68,22 @@
     }
   }
 
-  async function loadSheetMusic(xmlFile) {
+  async function loadSheetMusic(xmlFile: string) {
     await loadSamples();
     pause();
-    const { OpenSheetMusicDisplay, MusicSheet, Cursor } = await import('opensheetmusicdisplay');
+    const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay');
     loading.value = true;
-    osmd = new OpenSheetMusicDisplay(document.getElementById('sheetmusic'), {autoResize: true, darkMode: false, disableCursor: false, followCursor: true});
+    osmd = new OpenSheetMusicDisplay(document.getElementById('sheetmusic')!, {autoResize: true, darkMode: false, disableCursor: false, followCursor: true});
     osmd.setLogLevel('warn');
     await osmd.load(xmlFile);
-    parts.value = osmd.sheet.Parts.map((part) => {
+    parts.value = osmd.sheet.Parts.map((part: any) => {
       return {
         label: part.nameLabel.text,
         show: true
       };
     });
-    console.log(osmd.sheet);
-    
     osmd.zoom = isZoomedIn.value ? 0.9 : 0.5;
-    tempo.value = osmd.sheet.defaultStartTempoInBpm;
+    tempo.value = osmd.sheet.defaultStartTempoInBpm || 100;
     timeBasedOnTempo.value = 60000 / tempo.value;
     osmd.render();
     osmd.cursor.show();
@@ -95,17 +94,35 @@
     selectedSong.value = null;
   }
 
-  function play() {
+  function play(timeUntilNextNote = 999999) {
     isPlaying.value = true;
-    let timeUntilNextNote = 999999;
-    osmd.cursor.NotesUnderCursor().forEach((note) => {
+    let storedDuration = 0;
+    const notes = osmd.cursor.NotesUnderCursor();
+    if(notes.length === 0) {
+      isPlaying.value = false;
+      osmd.cursor.reset();
+      return;
+    }
+    notes.forEach((note: any) => {
       const duration = note.Length.realValue * rythm.value * timeBasedOnTempo.value;
+      storedDuration = Math.max(duration, storedDuration);
       timeUntilNextNote = Math.min(duration, timeUntilNextNote);
       playTone(note.ToStringShort(3), duration);
     });
+    console.log(notes[0], notes[0].SourceMeasure.endsWithLineRepetition())
+
     timeout = setTimeout(() => {
       osmd.cursor.next();
-      play();
+      const newNotes = osmd.cursor.NotesUnderCursor();
+      if(notes[0].SourceMeasure.endsWithLineRepetition() && newNotes[0].SourceMeasure !== notes[0].SourceMeasure) {
+        if(!hasRepetedOnce.value) {
+          hasRepetedOnce.value = true;
+          osmd.cursor.reset();
+        } else {
+          hasRepetedOnce.value = false;
+        }
+      }
+      play(storedDuration - timeUntilNextNote === 0 ? 999999 : storedDuration - timeUntilNextNote);
     }, timeUntilNextNote);
   }
 
@@ -188,8 +205,8 @@
   function playStartChoord() {
     pause();
     osmd.cursor.reset();
-    const queue = [];
-    osmd.cursor.NotesUnderCursor().forEach((note) => {
+    const queue: Array<any> = [];
+    osmd.cursor.NotesUnderCursor().forEach((note: any) => {
       if(!note.ToStringShort(3).includes('rest') && !queue.find((n) => n.ToStringShort(3) === note.ToStringShort(3))) {
         queue.push(note);
       }
@@ -205,7 +222,7 @@
   }
 
   function reload() {
-    window.location.reload(true);
+    window.location.reload();
   }
 </script>
 
