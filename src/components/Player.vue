@@ -36,7 +36,9 @@
     osmd.sheet.Parts.forEach((part: any, index: number) => {
       part.voices[0].visible = newParts.value[index].show;
     });
+    osmd.updateGraphic();
     osmd.render();
+    osmd.cursor.show();
   }, {deep: true, immediate: true});
 
   watch(() => selectedSong, async () => {
