@@ -8,6 +8,7 @@
   let timeout: any = null;
   let activeSources: Array<any> = [];
   let osmd: any = null;
+  let TypePointF2D: any;
   const fadeOutTime = 0.1;
   
   const loading = ref(true);
@@ -20,6 +21,13 @@
   const timeBasedOnTempo = ref(60000 / tempo.value);
   const parts = ref<any>([]);
   const hasRepetedOnce = ref(false);
+  const transpose = ref(0);
+
+  declare global {
+    interface Navigator {
+      audioSession: any;
+    }
+  }
 
   watch(() => parts, (newParts: any) => {
     if(!osmd) {
@@ -37,6 +45,16 @@
     }
     await loadSheetMusic('./songs/' + selectedSong.value);
     loading.value = false;
+  }, {deep: true, immediate: true});
+
+  watch(() => transpose, () => {
+    if(!osmd) {
+      return;
+    }
+    osmd.Sheet.Transpose = Number(transpose.value);
+    osmd.updateGraphic();
+    osmd.render();
+    osmd.cursor.show();
   }, {deep: true, immediate: true});
 
   onMounted(async () => {
@@ -71,9 +89,11 @@
   async function loadSheetMusic(xmlFile: string) {
     await loadSamples();
     pause();
-    const { OpenSheetMusicDisplay } = await import('opensheetmusicdisplay');
+    const { OpenSheetMusicDisplay, TransposeCalculator, PointF2D } = await import('opensheetmusicdisplay');
+    TypePointF2D = PointF2D;
     loading.value = true;
     osmd = new OpenSheetMusicDisplay(document.getElementById('sheetmusic')!, {autoResize: true, darkMode: false, disableCursor: false, followCursor: true});
+    osmd.TransposeCalculator = new TransposeCalculator();
     osmd.setLogLevel('warn');
     await osmd.load(xmlFile);
     parts.value = osmd.sheet.Parts.map((part: any) => {
@@ -82,7 +102,7 @@
         show: true
       };
     });
-    osmd.zoom = isZoomedIn.value ? 0.9 : 0.5;
+    osmd.zoom = isZoomedIn.value ? 1 : 0.5;
     tempo.value = osmd.sheet.defaultStartTempoInBpm || 100;
     timeBasedOnTempo.value = 60000 / tempo.value;
     osmd.render();
@@ -94,16 +114,28 @@
     selectedSong.value = null;
   }
 
+  function selectNote(event: any) {
+    var rect = event.target.getBoundingClientRect();
+    var x = event.clientX - rect.left;
+    var y: number = event.clientY - rect.top;
+    const nearestNote = osmd.GraphicSheet.GetNearestNote(
+      new TypePointF2D(x, y)
+    );
+    //console.log("Nearest Note: ", nearestNote, osmd.cursor.GNotesUnderCursor(), nearestNote?.getSVGId(), nearestNote?.getSVGId() === osmd.cursor.GNotesUnderCursor()[0].getSVGId());
+  }
+
   function play(timeUntilNextNote = 999999) {
     isPlaying.value = true;
     let storedDuration = 0;
     const notes = osmd.cursor.NotesUnderCursor();
+    //console.log(notes);
     if(notes.length === 0) {
       isPlaying.value = false;
       osmd.cursor.reset();
       return;
     }
     notes.forEach((note: any) => {
+      //TODO: Slurs slides etc
       const duration = note.Length.realValue * rythm.value * timeBasedOnTempo.value;
       storedDuration = Math.max(duration, storedDuration);
       timeUntilNextNote = Math.min(duration, timeUntilNextNote);
@@ -115,13 +147,29 @@
       if(notes[0].SourceMeasure.endsWithLineRepetition() && newNotes[0].SourceMeasure !== notes[0].SourceMeasure) {
         if(!hasRepetedOnce.value) {
           hasRepetedOnce.value = true;
-          osmd.cursor.reset();
+          while(!osmd.cursor.Iterator.FrontReached) {
+            const prevNotes = osmd.cursor.NotesUnderCursor();
+            osmd.cursor.previous();
+            if(prevNotes.length && prevNotes[0].SourceMeasure.beginsWithLineRepetition() && !osmd.cursor.NotesUnderCursor()[0].SourceMeasure.beginsWithLineRepetition()) {
+              break;
+            }
+          }
+          osmd.cursor.next();
         } else {
           hasRepetedOnce.value = false;
         }
       }
       play(storedDuration - timeUntilNextNote === 0 ? 999999 : storedDuration - timeUntilNextNote);
     }, timeUntilNextNote);
+  }
+
+  function jumpToSpecificNote(index: number) {
+    clearTimeout(timeout);
+    osmd.cursor.reset();
+    for(let i = 0; i < index; i++) {
+      osmd.cursor.next();
+    }
+    play();
   }
 
   function getNoteOffsetFromC4(note: string) {
@@ -131,7 +179,7 @@
     if(note === 'rest') {  
       return NaN;
     }
-    const noteValues = {
+    const noteValues: any = {
       'Cb': -1,
       'C': 0,
       'Cn': 0,
@@ -159,7 +207,7 @@
       'Bn': 11,
       'B': 11
     };
-    const noteParts = note.match(/([A-G]#?n?b?)(\d)/);
+    const noteParts: RegExpMatchArray = note.match(/([A-G]#?n?b?)(\d)/) || ['', '', ''];
     return noteValues[noteParts[1]] + (parseInt(noteParts[2]) - 4) * 12;
   }
 
@@ -196,7 +244,7 @@
 
   function toggleZoom() {
     isZoomedIn.value = !isZoomedIn.value;
-    osmd.zoom = isZoomedIn.value ? 0.9 : 0.5;
+    osmd.zoom = isZoomedIn.value ? 1.0 : 0.5;
     osmd.render();
   }
 
@@ -229,8 +277,9 @@
     <header class="header">
       <Logo class="logo" @click="back()" />
       <div class="songs">
+        <input type="range" min="-12" max="12" value="0" id="transpose" v-model="transpose">
         <span @click="toggleZoom()" v-if="selectedSong" class="zoom">🔍</span>
-        <span @click="back()" v-if="selectedSong" class="back">⬅️</span>
+        <span @click="jumpToSpecificNote(5)" v-if="selectedSong" class="back">⬅️</span>
         <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
         </select>
@@ -250,7 +299,7 @@
         <button @click="reload()">Uppdatera</button>
       </div>
     </section>
-    <div id="sheetmusic" class="sheetmusic" v-if="selectedSong"></div>
+    <div id="sheetmusic" class="sheetmusic" v-if="selectedSong" @click="selectNote"></div>
     <footer v-if="!loading && selectedSong" class="playbar">
       <span @click="reverse()">⏮️</span>
       <span @click="play()" v-if="!isPlaying">▶️</span>
