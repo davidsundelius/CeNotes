@@ -146,7 +146,7 @@
     timeout = setTimeout(() => {
       osmd.cursor.next();
       const newNotes = osmd.cursor.NotesUnderCursor();
-      if(notes[0].SourceMeasure.endsWithLineRepetition() && newNotes[0].SourceMeasure !== notes[0].SourceMeasure) {
+      if(notes[0].SourceMeasure.endsWithLineRepetition() && (newNotes.length === 0 || newNotes[0].SourceMeasure !== notes[0].SourceMeasure)) {
         if(!hasRepetedOnce.value) {
           hasRepetedOnce.value = true;
           while(!osmd.cursor.Iterator.FrontReached) {
