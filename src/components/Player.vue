@@ -339,13 +339,11 @@
     <header class="header">
       <Logo class="logo" @click="back()" />
       <div class="songs">
-        
         <span @click="toggleZoom()" v-if="selectedSong" class="zoom">🔍</span>
-        <span @click="back()" v-if="selectedSong" class="back">⬅️</span>
+        <button @click="settingsModal?.showModal()" v-if="selectedSong">⚙️</button>
         <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
         </select>
-        <button @click="settingsModal?.showModal()">⚙️</button>
       </div>
     </header>
     <Loader v-if="loading" class="loader"/>
@@ -439,6 +437,7 @@
   .songSelector {
     padding: 0.5em;
     font-size: 1em;
+    width: 120px;
     font-family: inherit;
     background-color: #313581;
     color: #fff;
