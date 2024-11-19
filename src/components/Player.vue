@@ -139,14 +139,12 @@
       return;
     }
     play();
-    console.log("Nearest Note: ", nearestNote, osmd.cursor.GNotesUnderCursor(), nearestNote?.getSVGId(), nearestNote?.getSVGId() === osmd.cursor.GNotesUnderCursor()[0].getSVGId());
   }
 
   function play(timeUntilNextNote = 999999) {
     isPlaying.value = true;
     let storedDuration = 0;
     const notes = osmd.cursor.NotesUnderCursor();
-    //console.log(notes);
     if(notes.length === 0) {
       isPlaying.value = false;
       osmd.cursor.reset();
