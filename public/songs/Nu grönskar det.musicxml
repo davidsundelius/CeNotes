@@ -9,7 +9,7 @@
     <creator type="lyricist">Evelyn Lindström</creator>
     <encoding>
       <software>MuseScore 4.4.3</software>
-      <encoding-date>2024-11-17</encoding-date>
+      <encoding-date>2024-11-18</encoding-date>
       <supports element="accidental" type="yes"/>
       <supports element="beam" type="yes"/>
       <supports element="print" attribute="new-page" type="yes" value="yes"/>
@@ -72,7 +72,7 @@
     </credit>
   <credit page="1">
     <credit-type>composer</credit-type>
-    <credit-words default-x="1114.75731" default-y="1467.015376" justify="right" valign="bottom">Text: Evelyn Lindström
+    <credit-words default-x="1114.75731" default-y="1467.015292" justify="right" valign="bottom">Text: Evelyn Lindström
 </credit-words>
     <credit-words>Musik: J. S. Bach
 </credit-words>
@@ -1022,10 +1022,9 @@
           <text>låt</text>
           </lyric>
         </note>
-      <note default-x="49.98" default-y="0">
+      <note default-x="49.98" default-y="-5">
         <pitch>
-          <step>F</step>
-          <alter>1</alter>
+          <step>E</step>
           <octave>4</octave>
           </pitch>
         <duration>2</duration>
@@ -1097,11 +1096,11 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>down</stem>
-        <lyric number="1" default-x="6.5" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="6.5" default-y="-49.83" relative-y="-30">
           <syllabic>begin</syllabic>
           <text>bräd</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>begin</syllabic>
           <text>li</text>
           </lyric>
@@ -1119,12 +1118,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>end</syllabic>
           <text>den</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>end</syllabic>
           <text>vents</text>
           <extend/>
@@ -1158,12 +1157,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>fylld</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>begin</syllabic>
           <text>ri</text>
           </lyric>
@@ -1195,12 +1194,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>med</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>middle</syllabic>
           <text>ke</text>
           </lyric>
@@ -1232,11 +1231,11 @@
         <type>half</type>
         <dot default-x="33.14" default-y="-15"/>
         <stem>down</stem>
-        <lyric number="1" default-x="8.38" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="8.38" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>vin.</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>end</syllabic>
           <text>dom</text>
           </lyric>
@@ -1254,12 +1253,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>Så</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>single</syllabic>
           <text>som</text>
           <extend/>
@@ -1291,11 +1290,11 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>down</stem>
-        <lyric number="1" default-x="6.5" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="6.5" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>dirck</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>single</syllabic>
           <text>gror</text>
           </lyric>
@@ -1314,12 +1313,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>min</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>single</syllabic>
           <text>och</text>
           <extend/>
@@ -1353,12 +1352,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-x="0.16" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="0.16" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>vän,</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>begin</syllabic>
           <text>sju</text>
           </lyric>
@@ -1391,20 +1390,20 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>drick</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>end</syllabic>
           <text>der</text>
           <extend/>
           </lyric>
         </note>
-      <note default-x="218.89" default-y="-20">
+      <note default-x="218.89" default-y="-25">
         <pitch>
-          <step>B</step>
+          <step>A</step>
           <octave>3</octave>
           </pitch>
         <duration>1</duration>
@@ -1427,11 +1426,11 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>down</stem>
-        <lyric number="1" default-x="6.5" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="6.5" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>sol</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>begin</syllabic>
           <text>ö</text>
           </lyric>
@@ -1449,12 +1448,12 @@
         <notations>
           <slur type="start" number="1"/>
           </notations>
-        <lyric number="1" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>och</text>
           <extend/>
           </lyric>
-        <lyric number="2" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-y="-73.54" relative-y="-30">
           <syllabic>middle</syllabic>
           <text>ver</text>
           </lyric>
@@ -1483,11 +1482,11 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>down</stem>
-        <lyric number="1" default-x="8.99" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="8.99" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>doft,</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>end</syllabic>
           <text>allt</text>
           </lyric>
@@ -1502,11 +1501,11 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>down</stem>
-        <lyric number="1" default-x="6.5" default-y="-44.86" relative-y="-30">
+        <lyric number="1" default-x="6.5" default-y="-49.83" relative-y="-30">
           <syllabic>single</syllabic>
           <text>ty</text>
           </lyric>
-        <lyric number="2" default-x="6.5" default-y="-68.57" relative-y="-30">
+        <lyric number="2" default-x="6.5" default-y="-73.54" relative-y="-30">
           <syllabic>single</syllabic>
           <text>där</text>
           </lyric>

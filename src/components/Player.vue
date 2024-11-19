@@ -9,7 +9,11 @@
   let activeSources: Array<any> = [];
   let osmd: any = null;
   let TypePointF2D: any;
-  const fadeOutTime = 0.1;
+  const fadeOutTime = 0.2;
+
+  const settingsModal = ref<HTMLDialogElement>();
+
+  const useSlurs = ref(false);
   
   const loading = ref(true);
   const isZoomedIn = ref(window.innerWidth > 800);
@@ -117,13 +121,25 @@
   }
 
   function selectNote(event: any) {
-    var rect = event.target.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var y: number = event.clientY - rect.top;
+    clearTimeout(timeout);
+    osmd.cursor.reset();
+    var sheetBoundingBox = event.target.getBoundingClientRect();
     const nearestNote = osmd.GraphicSheet.GetNearestNote(
-      new TypePointF2D(x, y)
+      new TypePointF2D((event.clientX - sheetBoundingBox.left - 5) / 10, (event.clientY - sheetBoundingBox.top - 5) / 10)
     );
-    //console.log("Nearest Note: ", nearestNote, osmd.cursor.GNotesUnderCursor(), nearestNote?.getSVGId(), nearestNote?.getSVGId() === osmd.cursor.GNotesUnderCursor()[0].getSVGId());
+    if(nearestNote?.getSVGId()) {
+      while(!osmd.cursor.GNotesUnderCursor().some((c: any) => c.getSVGId() === nearestNote.getSVGId())) {
+        osmd.cursor.next();
+        if(osmd.cursor.Iterator.EndReached) {
+          osmd.cursor.reset();
+          break;
+        }
+      }
+    } else {
+      return;
+    }
+    play();
+    console.log("Nearest Note: ", nearestNote, osmd.cursor.GNotesUnderCursor(), nearestNote?.getSVGId(), nearestNote?.getSVGId() === osmd.cursor.GNotesUnderCursor()[0].getSVGId());
   }
 
   function play(timeUntilNextNote = 999999) {
@@ -137,16 +153,41 @@
       return;
     }
     notes.forEach((note: any) => {
-      //TODO: Slurs slides etc
-      const duration = note.Length.realValue * rythm.value * timeBasedOnTempo.value;
+      let duration = 0;
+      let slurLength = 0;
+      let slurEndNote = null;
+      if(useSlurs.value) {
+        storedDuration = Math.max(duration, storedDuration);
+        if(note.slurs.some((slur: any) => slur.endNote === note)) {
+          timeUntilNextNote = Math.min(duration, timeUntilNextNote);
+          return;
+        }
+        slurLength = note.slurs.reduce((acc: any, slur: any) => {
+          return slur.endNote.length.realValue + acc;
+        }, 0);
+        if(slurLength > 0) {
+          slurEndNote = note.slurs[0].endNote
+        }
+      }
+      duration = (note.length.realValue + slurLength) * rythm.value * timeBasedOnTempo.value;
       storedDuration = Math.max(duration, storedDuration);
       timeUntilNextNote = Math.min(duration, timeUntilNextNote);
-      playTone(note.ToStringShort(3), duration);
+      if(slurEndNote) {
+        playTone(note.ToStringShort(3), duration, slurEndNote.ToStringShort(3));
+      } else {
+        playTone(note.ToStringShort(3), duration);
+      }
     });
     timeout = setTimeout(() => {
       osmd.cursor.next();
-      const newNotes = osmd.cursor.NotesUnderCursor();
-      if(notes[0].SourceMeasure.endsWithLineRepetition() && (newNotes.length === 0 || newNotes[0].SourceMeasure !== notes[0].SourceMeasure)) {
+      checkForRepetions(notes);
+      play(storedDuration - timeUntilNextNote === 0 ? 999999 : storedDuration - timeUntilNextNote);
+    }, timeUntilNextNote);
+  }
+
+  function checkForRepetions(notes: any) {
+    const newNotes = osmd.cursor.NotesUnderCursor();
+    if(notes[0].SourceMeasure.endsWithLineRepetition() && (newNotes.length === 0 || newNotes[0].SourceMeasure !== notes[0].SourceMeasure)) {
         if(!hasRepetedOnce.value) {
           hasRepetedOnce.value = true;
           while(!osmd.cursor.Iterator.FrontReached) {
@@ -161,18 +202,16 @@
           hasRepetedOnce.value = false;
         }
       }
-      play(storedDuration - timeUntilNextNote === 0 ? 999999 : storedDuration - timeUntilNextNote);
-    }, timeUntilNextNote);
   }
 
-  function jumpToSpecificNote(index: number) {
+  /*function jumpToSpecificNote(index: number) {
     clearTimeout(timeout);
     osmd.cursor.reset();
     for(let i = 0; i < index; i++) {
       osmd.cursor.next();
     }
     play();
-  }
+  }*/
 
   function getNoteOffsetFromC4(note: string) {
     if(!note) {
@@ -217,8 +256,9 @@
     osmd.cursor.reset();
   }
 
-  function playTone(note: string, duration: number) {
+  function playTone(note: string, duration: number, endNote?: string) {
     const noteValue = getNoteOffsetFromC4(note);
+    const endNoteValue = getNoteOffsetFromC4(endNote || '');
     if(isNaN(noteValue)) {
       return;
     }
@@ -227,6 +267,10 @@
     source.buffer = samples[3 + octave];
     activeSources.push(source);
     source.detune.value = (noteValue - octave*12) * 100;
+    source.detune.value += transpose.value * 100;
+    if(!isNaN(endNoteValue)) {
+      source.detune.linearRampToValueAtTime(source.detune.value + (endNoteValue - noteValue) * 100, audioContext.currentTime + duration / 1000);
+    }
     const gainer = audioContext.createGain();
     source.connect(gainer);
     gainer.connect(audioContext.destination);
@@ -276,15 +320,34 @@
 
 <template>
   <div>
+    <dialog ref="settingsModal" class="modal" @click="(event) => event.target === settingsModal ? settingsModal?.close() : null">
+      <section @click.stop>
+        <h1>Inställningar</h1>
+        <label>
+          <input type="checkbox" v-model="useSlurs">
+          Använd Slur
+        </label>
+        <br/>
+        <label>
+          <input type="range" min="-12" max="12" value="0" id="transpose" v-model="transpose">
+          Transponerar {{ transpose }} halvtoner
+        </label>
+        <br/>
+        <br/>
+        <button @click="settingsModal?.close()">Stäng</button>
+      </section>
+    </dialog>
+
     <header class="header">
       <Logo class="logo" @click="back()" />
       <div class="songs">
-        <input type="range" min="-12" max="12" value="0" id="transpose" v-model="transpose">
+        
         <span @click="toggleZoom()" v-if="selectedSong" class="zoom">🔍</span>
-        <span @click="jumpToSpecificNote(5)" v-if="selectedSong" class="back">⬅️</span>
+        <span @click="back()" v-if="selectedSong" class="back">⬅️</span>
         <select v-model="selectedSong" class="songSelector">
           <option v-for="(song, index) in songs" :key="index" :value="song.value">{{song.label}}</option>
         </select>
+        <button @click="settingsModal?.showModal()">⚙️</button>
       </div>
     </header>
     <Loader v-if="loading" class="loader"/>
@@ -295,7 +358,8 @@
         <h2>Välkommen till Fåmansbolagets app!</h2>
         För att sätta igång, välj en låt uppe till höger.
         <br/><br/>
-        <a href="https://drive.google.com/drive/u/0/folders/1NtsrANIRUENfbQavUggx9cu0L9mDGvph" target="_blank">Låtarkivet</a><br/>
+        <a href="https://docs.google.com/spreadsheets/d/1Asz1vAQnRQWRlBACTt4WN_92cJiI3OBNGVt8mDEVPCE" target="_blank">Stämmor</a><br/>
+        <a href="https://drive.google.com/drive/u/0/folders/1IUoG-h-6rYRIFZSNNX8_2aD13yMnw6W3" target="_blank">Låtarkivet</a><br/>
         <a href="https://docs.google.com/spreadsheets/d/1y43wZmyr1p-7MujA9y752EdvHZ0mI1WrdrCaJaOBGDU" target="_blank">Medlemslista</a>
         <br/><br/>
         <button @click="reload()">Uppdatera</button>
@@ -347,6 +411,13 @@
     text-align: left;
     line-height: 29px;
     font-size: 32px;
+  }
+
+  .modal {
+    z-index: 9999;
+  }
+  .modal::backdrop {
+    background-color: rgba(0, 0, 0, 0.5);
   }
 
   .songs {
