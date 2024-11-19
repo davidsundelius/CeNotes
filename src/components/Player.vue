@@ -9,12 +9,7 @@
   let activeSources: Array<any> = [];
   let osmd: any = null;
   let TypePointF2D: any;
-  const fadeOutTime = 0.2;
 
-  const settingsModal = ref<HTMLDialogElement>();
-
-  const useSlurs = ref(false);
-  
   const loading = ref(true);
   const isZoomedIn = ref(window.innerWidth > 800);
   const isPlaying = ref(false);
@@ -25,7 +20,12 @@
   const timeBasedOnTempo = ref(60000 / tempo.value);
   const parts = ref<any>([]);
   const hasRepetedOnce = ref(false);
+
+  const settingsModal = ref<HTMLDialogElement>();
+  const useSlurs = ref(false);
+  const zoomLevel = ref(0.5);
   const transpose = ref(0);
+  const fadeOutTime = 0.2;
 
   declare global {
     interface Navigator {
@@ -108,7 +108,7 @@
         show: true
       };
     });
-    osmd.zoom = isZoomedIn.value ? 1 : 0.5;
+    osmd.zoom = isZoomedIn.value ? 1 : zoomLevel.value;
     tempo.value = osmd.sheet.defaultStartTempoInBpm || 100;
     timeBasedOnTempo.value = 60000 / tempo.value;
     osmd.render();
@@ -125,7 +125,7 @@
     osmd.cursor.reset();
     var sheetBoundingBox = event.target.getBoundingClientRect();
     const nearestNote = osmd.GraphicSheet.GetNearestNote(
-      new TypePointF2D((event.clientX - sheetBoundingBox.left - 5) / 10, (event.clientY - sheetBoundingBox.top - 5) / 10)
+      new TypePointF2D((event.clientX - sheetBoundingBox.left - 5) / 10 / osmd.zoom, (event.clientY - sheetBoundingBox.top - 5) / 10 / osmd.zoom)
     );
     if(nearestNote?.getSVGId()) {
       while(!osmd.cursor.GNotesUnderCursor().some((c: any) => c.getSVGId() === nearestNote.getSVGId())) {
@@ -288,7 +288,7 @@
 
   function toggleZoom() {
     isZoomedIn.value = !isZoomedIn.value;
-    osmd.zoom = isZoomedIn.value ? 1.0 : 0.5;
+    osmd.zoom = isZoomedIn.value ? 1.0 : zoomLevel.value;
     osmd.render();
   }
 
