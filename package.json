@@ -7,7 +7,7 @@
     "serve": "vite --port 8080",
     "build": "vue-tsc -b && vite build",
     "deploy": "npm run update && vite build --base=/CeNotes/",
-    "update": "node ./scripts/generateSonglist.js",
+    "update": "node ./scripts/generateSonglist.js && node ./scripts/generateVoices.js",
     "preview": "vite preview --port 8080"
   },
   "dependencies": {

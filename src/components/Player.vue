@@ -2,6 +2,7 @@
   import { ref, onMounted, watch } from 'vue';
   import Logo from './Logo.vue';
   import Loader from './Loader.vue';
+  import SongFilter from './SongFilter.vue';
 
   let audioContext: any;
   let samples: Array<any> = [];
@@ -10,6 +11,7 @@
   let osmd: any = null;
   let TypePointF2D: any;
 
+  const showingSongFilter = ref(false);
   const loading = ref(true);
   const isZoomedIn = ref(window.innerWidth > 800);
   const isPlaying = ref(false);
@@ -350,16 +352,18 @@
 
     <section class="welcome" v-if="!loading && !selectedSong">
       <Logo class="fullsizeLogo" @click="selectedSong = null"/>
-      <div>
+      <div v-if="!showingSongFilter">
         <h2>Välkommen till Fåmansbolagets app!</h2>
         För att sätta igång, välj en låt uppe till höger.
         <br/><br/>
         <a href="https://docs.google.com/spreadsheets/d/1Asz1vAQnRQWRlBACTt4WN_92cJiI3OBNGVt8mDEVPCE" target="_blank">Stämmor</a><br/>
         <a href="https://drive.google.com/drive/u/0/folders/1IUoG-h-6rYRIFZSNNX8_2aD13yMnw6W3" target="_blank">Låtarkivet</a><br/>
-        <a href="https://docs.google.com/spreadsheets/d/1y43wZmyr1p-7MujA9y752EdvHZ0mI1WrdrCaJaOBGDU" target="_blank">Medlemslista</a>
+        <a href="https://docs.google.com/spreadsheets/d/1y43wZmyr1p-7MujA9y752EdvHZ0mI1WrdrCaJaOBGDU" target="_blank">Medlemslista</a><br/>
+        <button @click="showingSongFilter = true">Låtväljaren</button><br/>
         <br/><br/>
         <button @click="reload()">Uppdatera</button>
       </div>
+      <SongFilter v-if="showingSongFilter" @close="showingSongFilter=false"/>
     </section>
     <div id="sheetmusic" class="sheetmusic" v-if="selectedSong" @click="selectNote"></div>
     <footer v-if="!loading && selectedSong" class="playbar">
