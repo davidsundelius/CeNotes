@@ -2,10 +2,12 @@
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
 <score-partwise version="4.0">
   <work>
-    <work-title>Namnlös not</work-title>
+    <work-title>You will be found</work-title>
     </work>
   <identification>
-    <creator type="composer">Kompositör/arrangör</creator>
+    <creator type="arranger">David Sundelius</creator>
+    <creator type="composer">Benj Pasek och Justin Paul</creator>
+    <creator type="lyricist">Benj Pasek och Justin Paul</creator>
     <encoding>
       <software>MuseScore 4.5.2</software>
       <encoding-date>2025-08-27</encoding-date>
