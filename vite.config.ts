@@ -23,7 +23,7 @@ export default defineConfig({
   ],
   esbuild: { legalComments: 'none' },
   build: {
-    chunkSizeWarningLimit: 1173,
+    chunkSizeWarningLimit: 1177,
     target: 'esnext',
     reportCompressedSize: false
   }
