@@ -58,7 +58,7 @@
     if(!selectedSong.value) {
       return;
     }
-    await loadSheetMusic('/songs/' + encodeURIComponent(selectedSong.value));
+    await loadSheetMusic(import.meta.env.BASE_URL + 'songs/' + encodeURIComponent(selectedSong.value));
     loading.value = false;
     
     // Update URL when song is selected via dropdown
@@ -99,7 +99,7 @@
   });
 
   async function loadSongs() {
-    const loadedSongs = await fetch('/songs.json')
+    const loadedSongs = await fetch(import.meta.env.BASE_URL + 'songs.json')
       .then((response) => response.json());
     songs.value = loadedSongs.map((song: string) => {
       return {
@@ -131,7 +131,7 @@
     document.addEventListener('touchstart', resumeOnTouch);
     samples = [];
     for(let i = 1; i < 6; i++) {
-      samples.push(await fetch('/samples/C'+i+'.mp3')
+      samples.push(await fetch(import.meta.env.BASE_URL + 'samples/C'+i+'.mp3')
         .then((response) => response.arrayBuffer())
         .then((buffer) => audioContext.decodeAudioData(buffer)));
     }

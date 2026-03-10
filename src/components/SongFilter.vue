@@ -15,7 +15,7 @@
 
   async function loadVoices() {
     loading.value = true;
-    voices.value = await fetch('./voices.json').then((res) => res.json());
+    voices.value = await fetch(import.meta.env.BASE_URL + 'voices.json').then((res) => res.json());
     voices.value.songs.forEach((song: any) => {
       song.voices = Object.getOwnPropertyNames(song).filter((key) => key !== 'name');
     });
