@@ -5,10 +5,10 @@
     <work-title>Go The Distance</work-title>
     </work>
   <identification>
-    <creator type="composer">Kompositör/arrangör</creator>
+    <creator type="composer">Allan Menken och David Zippel</creator>
     <encoding>
       <software>MuseScore Studio 4.6.5</software>
-      <encoding-date>2026-01-28</encoding-date>
+      <encoding-date>2026-03-11</encoding-date>
       <supports element="accidental" type="yes"/>
       <supports element="beam" type="yes"/>
       <supports element="print" attribute="new-page" type="yes" value="yes"/>
@@ -19,8 +19,6 @@
     <miscellaneous>
       <miscellaneous-field name="creationDate">2023-12-28</miscellaneous-field>
       <miscellaneous-field name="platform">Microsoft Windows</miscellaneous-field>
-      <miscellaneous-field name="sourceRevisionId">73629767</miscellaneous-field>
-      <miscellaneous-field name="subtitle">Undertitel</miscellaneous-field>
       </miscellaneous>
     </identification>
   <defaults>
@@ -79,6 +77,10 @@
   <credit page="1">
     <credit-type>subtitle</credit-type>
     <credit-words default-x="600.241173" default-y="1554.058251" justify="center" valign="top" font-size="14">Herkules</credit-words>
+    </credit>
+  <credit page="1">
+    <credit-type>composer</credit-type>
+    <credit-words default-x="1114.75731" default-y="1488.437923" justify="right" valign="bottom">Arr och text: Allan Menken och David Zippel</credit-words>
     </credit>
   <part-list>
     <part-group type="start" number="1">

@@ -2,14 +2,14 @@
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
 <score-partwise version="4.0">
   <work>
-    <work-title>Hårga-låten</work-title>
+    <work-title>Hårgalåten</work-title>
     </work>
   <identification>
     <creator type="composer">trad. Sats: Robert Sund (f.1942)</creator>
     <creator type="lyricist">Carl Peter Wickström</creator>
     <encoding>
       <software>MuseScore Studio 4.6.5</software>
-      <encoding-date>2026-03-10</encoding-date>
+      <encoding-date>2026-03-11</encoding-date>
       <supports element="accidental" type="yes"/>
       <supports element="beam" type="yes"/>
       <supports element="print" attribute="new-page" type="yes" value="yes"/>
