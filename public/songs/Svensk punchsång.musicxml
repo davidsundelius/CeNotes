@@ -2,13 +2,13 @@
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
 <score-partwise version="4.0">
   <work>
-    <work-title>Namnlös</work-title>
+    <work-title>Svensk punchsång</work-title>
     </work>
   <identification>
-    <creator type="composer">Kompositör/arrangör</creator>
+    <creator type="composer">G. Wennerberg</creator>
     <encoding>
       <software>MuseScore Studio 4.6.5</software>
-      <encoding-date>2026-01-28</encoding-date>
+      <encoding-date>2026-03-10</encoding-date>
       <supports element="accidental" type="yes"/>
       <supports element="beam" type="yes"/>
       <supports element="print" attribute="new-page" type="yes" value="yes"/>
@@ -18,7 +18,6 @@
     <miscellaneous>
       <miscellaneous-field name="creationDate">2026-01-10</miscellaneous-field>
       <miscellaneous-field name="platform">Apple Macintosh</miscellaneous-field>
-      <miscellaneous-field name="subtitle">Undertitel</miscellaneous-field>
       </miscellaneous>
     </identification>
   <defaults>

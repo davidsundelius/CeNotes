@@ -1,22 +1,29 @@
 <script setup lang="ts">
   import { ref, onMounted, watch } from 'vue';
+  import { useRoute, useRouter } from 'vue-router';
   import Logo from './Logo.vue';
   import Loader from './Loader.vue';
   import SongFilter from './SongFilter.vue';
 
+  const route = useRoute();
+  const router = useRouter();
+
   let audioContext: any;
+  let compressor: any;
   let samples: Array<any> = [];
   let timeout: any = null;
-  let activeSources: Array<any> = [];
+  let activeSources: Array<any> = [];  
   let osmd: any = null;
   let TypePointF2D: any;
+  let loadId = 0;
+  let activeSlursPerVoice = new Map<number, Set<any>>();
 
   const showingSongFilter = ref(false);
   const loading = ref(true);
   const isZoomedIn = ref(window.innerWidth > 800);
   const isPlaying = ref(false);
   const songs = ref<Array<{label: string, value: string}>>([]);
-  const selectedSong = ref(null);
+  const selectedSong = ref<string | null>(null);
   const tempo = ref(120);
   const rythm = ref(4);
   const timeBasedOnTempo = ref(60000 / tempo.value);
@@ -51,9 +58,30 @@
     if(!selectedSong.value) {
       return;
     }
-    await loadSheetMusic('./songs/' + selectedSong.value);
+    await loadSheetMusic('/songs/' + encodeURIComponent(selectedSong.value));
     loading.value = false;
+    
+    // Update URL when song is selected via dropdown
+    const songName = selectedSong.value.replace('.musicxml', '');
+    const encodedSongName = encodeURIComponent(songName);
+    if(route.params.songName !== encodedSongName) {
+      router.push({ name: 'song', params: { songName: encodedSongName } });
+    }
   }, {deep: true, immediate: true});
+
+  // Watch for URL changes and update selectedSong accordingly
+  watch(() => route.params.songName, (newSongName) => {
+    if(newSongName && typeof newSongName === 'string') {
+      const decodedSongName = decodeURIComponent(newSongName);
+      const songValue = decodedSongName + '.musicxml';
+      if(selectedSong.value !== songValue) {
+        selectedSong.value = songValue;
+      }
+    } else if(!newSongName && selectedSong.value) {
+      // If URL has no song but we have a selected song, clear it
+      selectedSong.value = null;
+    }
+  }, { immediate: true });
 
   watch(() => transpose, () => {
     if(!osmd) {
@@ -71,7 +99,7 @@
   });
 
   async function loadSongs() {
-    const loadedSongs = await fetch('./songs.json')
+    const loadedSongs = await fetch('/songs.json')
       .then((response) => response.json());
     songs.value = loadedSongs.map((song: string) => {
       return {
@@ -86,17 +114,35 @@
       navigator.audioSession.type = 'playback';
     }
     loading.value = true;
-    audioContext = new AudioContext()
+    audioContext?.close();
+    audioContext = new AudioContext();
+    compressor = audioContext.createDynamicsCompressor();
+    compressor.threshold.value = -6;
+    compressor.knee.value = 0;
+    compressor.ratio.value = 20;
+    compressor.attack.value = 0.001;
+    compressor.release.value = 0.1;
+    compressor.connect(audioContext.destination);
+    // iOS requires a user gesture to resume a suspended AudioContext
+    const resumeOnTouch = () => {
+      audioContext?.resume();
+      document.removeEventListener('touchstart', resumeOnTouch);
+    };
+    document.addEventListener('touchstart', resumeOnTouch);
+    samples = [];
     for(let i = 1; i < 6; i++) {
-      samples.push(await fetch('./samples/C'+i+'.mp3')
+      samples.push(await fetch('/samples/C'+i+'.mp3')
         .then((response) => response.arrayBuffer())
         .then((buffer) => audioContext.decodeAudioData(buffer)));
     }
   }
 
   async function loadSheetMusic(xmlFile: string) {
+    const currentLoadId = ++loadId;
     await loadSamples();
+    if(currentLoadId !== loadId) return;
     pause();
+    activeSlursPerVoice.clear();
     const { OpenSheetMusicDisplay, TransposeCalculator, PointF2D } = await import('opensheetmusicdisplay');
     TypePointF2D = PointF2D;
     loading.value = true;
@@ -118,12 +164,16 @@
   }
 
   function back() {
-    stop();
+    pause();
     selectedSong.value = null;
+    // Navigate to home route (removing song from URL)
+    if(route.name !== 'home') {
+      router.push({ name: 'home' });
+    }
   }
 
   function selectNote(event: any) {
-    clearTimeout(timeout);
+    pause();
     osmd.cursor.reset();
     var sheetBoundingBox = event.target.getBoundingClientRect();
     const nearestNote = osmd.GraphicSheet.GetNearestNote(
@@ -143,46 +193,263 @@
     play();
   }
 
-  function play(timeUntilNextNote = 999999) {
+  function play(prevRemaining: number = 0) {
+    audioContext?.resume();
     isPlaying.value = true;
-    let storedDuration = 0;
+    const ps = osmd.cursor.Iterator?.currentPlaybackSettings?.();
+    const beatLengthMs = ps?.BeatLengthInMilliseconds || timeBasedOnTempo.value;
+    const beatRealValue = ps?.BeatRealValue || (1 / rythm.value);
     const notes = osmd.cursor.NotesUnderCursor();
     if(notes.length === 0) {
       isPlaying.value = false;
       osmd.cursor.reset();
       return;
     }
-    notes.forEach((note: any) => {
-      let duration = 0;
-      let slurLength = 0;
-      let slurEndNote = null;
-      if(useSlurs.value) {
-        storedDuration = Math.max(duration, storedDuration);
-        if(note.slurs.some((slur: any) => slur.endNote === note)) {
-          timeUntilNextNote = Math.min(duration, timeUntilNextNote);
-          return;
+    // Collect timing durations for all notes at this cursor position
+    const noteDurations: number[] = [];
+    
+    notes.forEach((note: any, noteIndex: number) => {
+      // Always skip tied continuations — the start note covers the full duration
+      if(note.NoteTie && note.NoteTie.StartNote !== note) {
+        return;
+      }
+      
+      const voiceId = note.ParentVoiceEntry?.ParentVoice?.VoiceId ?? noteIndex;
+      const activeSlurs = activeSlursPerVoice.get(voiceId) || new Set();
+      
+      // Check if this note is an active slur end note
+      if(useSlurs.value && note.slurs.some((slur: any) => slur.endNote === note && activeSlurs.has(slur))) {
+        // This is the end of an active slur - skip and remove from active
+        note.slurs.forEach((slur: any) => {
+          if(slur.endNote === note) {
+            activeSlurs.delete(slur);
+          }
+        });
+        if(activeSlurs.size === 0) {
+          activeSlursPerVoice.delete(voiceId);
         }
-        slurLength = note.slurs.reduce((acc: any, slur: any) => {
-          return slur.endNote.length.realValue + acc;
-        }, 0);
-        if(slurLength > 0) {
-          slurEndNote = note.slurs[0].endNote
+        return;
+      }
+      
+      // Check if this note is in the middle of an active slur (doesn't start any of the active slurs)
+      if(useSlurs.value && activeSlurs.size > 0) {
+        // If this note doesn't have any of the active slurs, it's intermediate
+        let isIntermediate = true;
+        for(const slur of activeSlurs) {
+          if(note.slurs.includes(slur)) {
+            isIntermediate = false;
+            break;
+          }
+        }
+        if(isIntermediate) {
+          return; // Skip intermediate notes
         }
       }
-      duration = (note.length.realValue + slurLength) * rythm.value * timeBasedOnTempo.value;
-      storedDuration = Math.max(duration, storedDuration);
-      timeUntilNextNote = Math.min(duration, timeUntilNextNote);
+      
+      // Add any new slurs starting at this note
+      if(useSlurs.value && note.slurs.length > 0) {
+        note.slurs.forEach((slur: any) => {
+          if(slur.endNote && slur.endNote !== note && !activeSlurs.has(slur)) {
+            activeSlurs.add(slur);
+          }
+        });
+        if(activeSlurs.size > 0) {
+          activeSlursPerVoice.set(voiceId, activeSlurs);
+        }
+      }
+      
+      // CRITICAL: Separate timing (cursor advance) from sound (audio playback)
+      // - Timing uses only the current note's duration
+      // - Sound uses the full tie chain duration
+      // This prevents inflating prevRemaining and causing delays
+      let soundRealValue = note.length.realValue;
+      let timingRealValue = note.length.realValue;
+      if(note.NoteTie && note.NoteTie.Notes && note.NoteTie.Notes.length > 0) {
+        // Sum all notes in the tie chain for sound duration
+        soundRealValue = 0;
+        for(const tiedNote of note.NoteTie.Notes) {
+          soundRealValue += tiedNote.length.realValue;
+        }
+        // Keep timingRealValue as single note only - do NOT set to soundRealValue
+      }
+      
+      // Check for fermata on any note in the tie chain
+      let tieHasFermata = false;
+      if(note.NoteTie && note.NoteTie.Notes) {
+        for(const tiedNote of note.NoteTie.Notes) {
+          if(tiedNote.ParentVoiceEntry?.Articulations?.some(
+            (a: any) => a.articulationEnum === 10 || a.articulationEnum === 11
+          )) {
+            tieHasFermata = true;
+            break;
+          }
+        }
+      }
+      
+      // Calculate slur extension by walking through voice to find all intermediate notes
+      let slurRealValue = 0;
+      let slurEndNote: any = null;
+      let slurNotesWithFermata: any[] = []; // Track notes in slur that have fermata
+      if(useSlurs.value && note.slurs.length > 0) {
+        note.slurs.forEach((slur: any) => {
+          if(slur.endNote && slur.endNote !== note) {
+            // Try to use the slur's built-in notes collection if available
+            if(slur.Notes && slur.Notes.length > 0) {
+              // Sum all notes in the slur except the first one
+              for(let i = 1; i < slur.Notes.length; i++) {
+                const slurNote = slur.Notes[i];
+                // Manually sum tied notes if present
+                let noteRealValue = slurNote.length.realValue;
+                if(slurNote.NoteTie && slurNote.NoteTie.Notes && slurNote.NoteTie.Notes.length > 0) {
+                  noteRealValue = 0;
+                  for(const tiedNote of slurNote.NoteTie.Notes) {
+                    noteRealValue += tiedNote.length.realValue;
+                  }
+                }
+                slurRealValue += noteRealValue;
+                // Check if this slur note has a fermata
+                if(slurNote.ParentVoiceEntry?.Articulations?.some(
+                  (a: any) => a.articulationEnum === 10 || a.articulationEnum === 11
+                )) {
+                  slurNotesWithFermata.push(slurNote);
+                }
+              }
+              slurEndNote = slur.endNote;
+            } else {
+              // Fallback: Walk through voice entries to find intermediate notes
+              const voice = note.ParentVoiceEntry?.ParentVoice;
+              
+              if(voice && voice.VoiceEntries) {
+                let foundStart = false;
+                let accumulatedDuration = 0;
+                let foundEnd = false;
+                
+                for(const entry of voice.VoiceEntries) {
+                  for(const voiceNote of entry.Notes) {
+                    if(voiceNote === note) {
+                      foundStart = true;
+                      continue; // Don't count the start note
+                    }
+                    if(foundStart && !foundEnd) {
+                      // Add this note's duration (realValue already includes time modifications like triplets)
+                      // Manually sum tied notes if present
+                      let noteRealValue = voiceNote.length.realValue;
+                      if(voiceNote.NoteTie && voiceNote.NoteTie.Notes && voiceNote.NoteTie.Notes.length > 0) {
+                        noteRealValue = 0;
+                        for(const tiedNote of voiceNote.NoteTie.Notes) {
+                          noteRealValue += tiedNote.length.realValue;
+                        }
+                      }
+                      accumulatedDuration += noteRealValue;
+                      // Check if this voice note has a fermata
+                      if(voiceNote.ParentVoiceEntry?.Articulations?.some(
+                        (a: any) => a.articulationEnum === 10 || a.articulationEnum === 11
+                      )) {
+                        slurNotesWithFermata.push(voiceNote);
+                      }
+                      
+                      if(voiceNote === slur.endNote) {
+                        foundEnd = true;
+                        break;
+                      }
+                    }
+                  }
+                  if(foundEnd) break;
+                }
+                
+                if(foundEnd && accumulatedDuration > 0) {
+                  slurRealValue += accumulatedDuration;
+                  slurEndNote = slur.endNote;
+                } else {
+                  // Couldn't walk the voice properly, just use end note duration
+                  let endNoteRealValue = slur.endNote.length.realValue;
+                  if(slur.endNote.NoteTie && slur.endNote.NoteTie.Notes && slur.endNote.NoteTie.Notes.length > 0) {
+                    endNoteRealValue = 0;
+                    for(const tiedNote of slur.endNote.NoteTie.Notes) {
+                      endNoteRealValue += tiedNote.length.realValue;
+                    }
+                  }
+                  slurRealValue += endNoteRealValue;
+                  slurEndNote = slur.endNote;
+                }
+              } else {
+                // No voice entry access, fallback to just end note duration
+                let endNoteRealValue = slur.endNote.length.realValue;
+                if(slur.endNote.NoteTie && slur.endNote.NoteTie.Notes && slur.endNote.NoteTie.Notes.length > 0) {
+                  endNoteRealValue = 0;
+                  for(const tiedNote of slur.endNote.NoteTie.Notes) {
+                    endNoteRealValue += tiedNote.length.realValue;
+                  }
+                }
+                slurRealValue += endNoteRealValue;
+                slurEndNote = slur.endNote;
+              }
+            }
+          }
+        });
+      }
+      
+      // Check for fermata on current note OR any note in the tie chain OR any note in the slur chain
+      const hasFermata = (note.ParentVoiceEntry?.Articulations?.some(
+        (a: any) => a.articulationEnum === 10 || a.articulationEnum === 11
+      ) ?? false) || tieHasFermata || slurNotesWithFermata.length > 0;
+      const fermataMultiplier = hasFermata ? 1.5 : 1;
+      const soundDuration = (soundRealValue + slurRealValue) / beatRealValue * beatLengthMs * fermataMultiplier;
+      const timingDuration = timingRealValue / beatRealValue * beatLengthMs * fermataMultiplier;
+      noteDurations.push(timingDuration);
       if(slurEndNote) {
-        playTone(note.ToStringShort(3), duration, slurEndNote.ToStringShort(3));
+        playTone(note.ToStringShort(3), soundDuration, slurEndNote.ToStringShort(3));
       } else {
-        playTone(note.ToStringShort(3), duration);
+        playTone(note.ToStringShort(3), soundDuration);
       }
     });
+    // All notes at this position were skipped (tied/slur continuations)
+    if(noteDurations.length === 0) {
+      if(prevRemaining > 0) {
+        // We still need to wait for the prevRemaining time before advancing
+        timeout = setTimeout(() => {
+          osmd.cursor.next();
+          checkForRepetions(notes);
+          play(0); // After waiting, there's nothing left remaining
+        }, prevRemaining);
+      } else {
+        // No notes playing and nothing remaining - advance immediately
+        osmd.cursor.next();
+        checkForRepetions(notes);
+        play(0);
+      }
+      return;
+    }
+    
+    // Include prevRemaining (from notes still playing from previous positions) in timing calculation
+    const allDurations = prevRemaining > 0 ? [...noteDurations, prevRemaining] : noteDurations;
+    
+    // Use the minimum duration to advance the cursor
+    // This ensures we move at the pace of the shortest event (either a new note or a note finishing from before)
+    const timeUntilNext = Math.min(...allDurations);
+    
+    // Safety check: ensure timeUntilNext is reasonable (at least 1ms)
+    if(timeUntilNext < 1) {
+      console.warn('Invalid timeUntilNext:', timeUntilNext, 'noteDurations:', noteDurations, 'prevRemaining:', prevRemaining);
+      // Skip to next position immediately
+      osmd.cursor.next();
+      checkForRepetions(notes);
+      play(0);
+      return;
+    }
+    
+    // Calculate the next remaining duration for notes that will still be playing
+    // This is the earliest upcoming event from notes not yet exhausted
+    const remainingDurations = allDurations
+      .map(d => d - timeUntilNext)
+      .filter(d => d > 0.5); // Filter out very small remainders (< 0.5ms) to avoid accumulating rounding errors
+    const nextRemaining = remainingDurations.length > 0 ? Math.min(...remainingDurations) : 0;
+    
     timeout = setTimeout(() => {
       osmd.cursor.next();
       checkForRepetions(notes);
-      play(storedDuration - timeUntilNextNote === 0 ? 999999 : storedDuration - timeUntilNextNote);
-    }, timeUntilNextNote);
+      play(nextRemaining);
+    }, timeUntilNext);
   }
 
   function checkForRepetions(notes: any) {
@@ -253,6 +520,9 @@
   }
 
   function reverse() {
+    pause();
+    hasRepetedOnce.value = false;
+    activeSlursPerVoice.clear();
     osmd.cursor.reset();
   }
 
@@ -266,6 +536,9 @@
     const source = audioContext.createBufferSource();
     source.buffer = samples[3 + octave];
     activeSources.push(source);
+    source.onended = () => {
+      activeSources = activeSources.filter((s) => s !== source);
+    };
     source.detune.value = (noteValue - octave*12) * 100;
     source.detune.value += transpose.value * 100;
     if(!isNaN(endNoteValue)) {
@@ -273,8 +546,9 @@
     }
     const gainer = audioContext.createGain();
     source.connect(gainer);
-    gainer.connect(audioContext.destination);
+    gainer.connect(compressor);
     source.start(0);
+    gainer.gain.setValueAtTime(5.0, audioContext.currentTime);
     gainer.gain.linearRampToValueAtTime(0.0001, audioContext.currentTime + duration / 1000 + fadeOutTime);
     source.stop(audioContext.currentTime + duration / 1000 + fadeOutTime);
   }
@@ -286,6 +560,7 @@
     });
     activeSources = [];
     isPlaying.value = false;
+    activeSlursPerVoice.clear();
   }
 
   function toggleZoom() {
